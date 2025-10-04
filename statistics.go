@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -15,6 +16,10 @@ type Stats struct {
 	Successes int `json:"successes"`
 	Mistakes  int `json:"mistakes"`
 }
+
+// ******************************************************
+// READ/WRITE BASICS
+// ******************************************************
 
 func (a *WordCardsApp) IncrementCount(success SuccessLevel) {
 	s := a.LoadCurrentStats()
@@ -55,9 +60,26 @@ func (a *WordCardsApp) UpdateCurrentStats(s Stats) {
 	a.statistics[fmt.Sprintf("%s_%d_%d", lp.ToString(), month, d.Year())] = s
 }
 
-func (a *WordCardsApp) DisplayStatsMenu() {
+// ******************************************************
+// LISTING
+// ******************************************************
 
+func (a *WordCardsApp) GetStatEvals(lp LangPair) map[string]Stats {
+	prefix := lp.ToString()
+	mp := map[string]Stats{}
+	for key, value := range a.statistics {
+		if !strings.HasPrefix(key, prefix) {
+			continue
+		}
+		outkey := strings.ReplaceAll(strings.ReplaceAll(key, prefix+"_", ""), "_", "/")
+		mp[outkey] = value
+	}
+	return mp
 }
+
+// ******************************************************
+// HANDLING FILES
+// ******************************************************
 
 func (a *WordCardsApp) SaveStatistics() {
 	if a.conf.savDir == "" {
