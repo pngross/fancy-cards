@@ -42,6 +42,7 @@ func (l LangPair) ToString() string {
 type CardsConfig struct {
 	languageNames       map[string]string
 	langPairs           []LangPair
+	savDir              string
 	inputDirPrefix      string
 	languagesConfigFile string
 	files               map[string][]InputFile
@@ -171,13 +172,14 @@ func loadConfigsIni(inipath string) (CardsConfig, error) {
 
 	configfilesSection := CardsIniReader.Section("CONFIGFILES")
 	for _, k := range configfilesSection.Keys() {
-		kn := k.Name()
 		val := k.String()
-		if kn == "inputDirPrefix" {
+		switch k.Name() {
+		case "inputDirPrefix":
 			c.inputDirPrefix = val
-		}
-		if kn == "languagesConfigFile" {
+		case "languagesConfigFile":
 			c.languagesConfigFile = val
+		case "savDir":
+			c.savDir = val
 		}
 	}
 

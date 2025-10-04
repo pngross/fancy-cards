@@ -7,4 +7,5 @@ func main() {
 	application := InitUI(conf)
 	application.HandleError(err)
 	application.window.ShowAndRun()
+	application.SaveStatistics()
 }

@@ -16,6 +16,7 @@ type WordCardsApp struct {
 	window     fyne.Window
 	mainMenu   *fyne.Container
 	rando      CardsRandomizer
+	statistics map[string]Stats
 	selectedLP LangPair
 	reverse    bool
 }
@@ -26,7 +27,10 @@ func InitUI(conf CardsConfig) WordCardsApp {
 
 	application := WordCardsApp{conf: conf, app: fyneApp, window: w}
 	application.CreateMainMenu(conf)
+	err := application.InitializeStatistics()
 	application.ToMainMenu()
+	application.HandleError(err)
+
 	return application
 }
 
@@ -91,8 +95,8 @@ func (a *WordCardsApp) CheckCard(word string, wc WordCard) {
 		feedbackLabel.SetText("Richtig!")
 	case Skipped:
 		feedbackLabel.SetText("Übersprungen...")
-
 	}
+	a.IncrementCount(success)
 
 	continueBtn := widget.NewButton("Weiter", func() {
 		a.LoadRandomCard()
@@ -135,7 +139,7 @@ func (a *WordCardsApp) CreateMainMenu(conf CardsConfig) {
 		})
 		a.mainMenu.Add(btn)
 
-		// Automaticaly adding reverse wordcards for each language pair
+		// Automatically adding reverse wordcards for each language pair
 		// This skipped if there's a collision (language pair already exists in the original file)
 
 		reversePair := LangPair{sourceLang: lp.targetLang, targetLang: lp.sourceLang}
