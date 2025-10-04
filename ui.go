@@ -17,6 +17,7 @@ type WordCardsApp struct {
 	mainMenu   *fyne.Container
 	rando      CardsRandomizer
 	selectedLP LangPair
+	reverse    bool
 }
 
 func InitUI(conf CardsConfig) WordCardsApp {
@@ -54,8 +55,14 @@ func (a *WordCardsApp) LoadRandomCard() {
 		a.ToMainMenu()
 	})
 
-	inputWord := widget.NewLabel(fmt.Sprintf("%s: %s",
-		a.conf.GetLangName(a.selectedLP.sourceLang), wc.sourceWord))
+	var lang string
+	if a.reverse {
+		lang = a.conf.GetLangName(a.selectedLP.targetLang)
+	} else {
+		lang = a.conf.GetLangName(a.selectedLP.sourceLang)
+	}
+
+	inputWord := widget.NewLabel(fmt.Sprintf("%s: %s", lang, wc.sourceWord))
 
 	checkBtn := widget.NewButton("Prüfen", func() {
 		a.CheckCard(textbox.Text, wc)
@@ -94,7 +101,16 @@ func (a *WordCardsApp) CheckCard(word string, wc WordCard) {
 		a.ToMainMenu()
 	})
 
-	correctSolution := widget.NewLabel(fmt.Sprintf("%s => %s", wc.sourceWord, wc.targetWord))
+	var sw, tw string
+	if a.reverse {
+		tw = wc.sourceWord
+		sw = wc.targetWord
+	} else {
+		sw = wc.sourceWord
+		tw = wc.targetWord
+	}
+
+	correctSolution := widget.NewLabel(fmt.Sprintf("%s => %s", sw, tw))
 
 	resultView := container.NewVBox(
 		feedbackLabel,
@@ -115,9 +131,22 @@ func (a *WordCardsApp) CreateMainMenu(conf CardsConfig) {
 	for _, lp := range conf.langPairs {
 		lpstr := conf.GetLangPairAsString(lp)
 		btn := widget.NewButton(lpstr, func() {
-			a.SelectLangpair(conf, lp)
+			a.SelectLangpair(conf, lp, false)
 		})
 		a.mainMenu.Add(btn)
+
+		// Automaticaly adding reverse wordcards for each language pair
+		// This skipped if there's a collision (language pair already exists in the original file)
+
+		reversePair := LangPair{sourceLang: lp.targetLang, targetLang: lp.sourceLang}
+		if !conf.LangPairExists(reversePair) {
+			reverseLpstr := conf.GetLangPairAsString(reversePair)
+			reverseBtn := widget.NewButton(reverseLpstr, func() {
+				a.SelectLangpair(conf, lp, true)
+			})
+			a.mainMenu.Add(reverseBtn)
+		}
+
 	}
 
 	a.mainMenu.Add(widget.NewButton("Anleitung", func() {
@@ -129,9 +158,10 @@ func (a *WordCardsApp) CreateMainMenu(conf CardsConfig) {
 	}))
 }
 
-func (a *WordCardsApp) SelectLangpair(conf CardsConfig, lp LangPair) {
+func (a *WordCardsApp) SelectLangpair(conf CardsConfig, lp LangPair, reverse bool) {
 	a.selectedLP = lp
-	cards, err := ReadCards(conf, lp)
+	a.reverse = reverse
+	cards, err := ReadCards(conf, lp, reverse)
 	a.HandleError(err)
 	if err == nil {
 		a.rando = NewRando(cards)

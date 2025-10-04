@@ -44,7 +44,7 @@ func (rando *CardsRandomizer) FetchRandomCard() WordCard {
 	return rando.cards[pos]
 }
 
-func readCardsFromCsv(mapp InputFile, inputdir, group string) ([]WordCard, error) {
+func readCardsFromCsv(mapp InputFile, inputdir, group string, reverse bool) ([]WordCard, error) {
 	karten := []WordCard{}
 	f, err := os.Open(filepath.Join(inputdir, mapp.fileName))
 	if err != nil {
@@ -66,12 +66,20 @@ func readCardsFromCsv(mapp InputFile, inputdir, group string) ([]WordCard, error
 			continue
 		}
 
-		karte := WordCard{sourceWord: ds[mapp.sourceWordCol],
-			targetWord: ds[mapp.targetWordCol],
-			group:      group}
+		var karte WordCard
+		if reverse {
+			karte = WordCard{sourceWord: ds[mapp.targetWordCol],
+				targetWord: ds[mapp.sourceWordCol],
+				group:      group}
+		} else {
+			karte = WordCard{sourceWord: ds[mapp.sourceWordCol],
+				targetWord: ds[mapp.targetWordCol],
+				group:      group}
 
-		if len(ds) > mapp.sourceCommentCol {
-			karte.sourceComment = ds[mapp.sourceCommentCol]
+		}
+
+		if len(ds) > mapp.targetCommentCol {
+			karte.sourceComment = ds[mapp.targetCommentCol]
 		}
 		karten = append(karten, karte)
 	}
@@ -79,12 +87,12 @@ func readCardsFromCsv(mapp InputFile, inputdir, group string) ([]WordCard, error
 	return karten, nil
 }
 
-func ReadCards(conf CardsConfig, lp LangPair) ([]WordCard, error) {
+func ReadCards(conf CardsConfig, lp LangPair, reverse bool) ([]WordCard, error) {
 	mappings := conf.GetInputFiles(lp.ToString())
 
 	allCards := []WordCard{}
 	for _, mapp := range mappings {
-		karten, err := readCardsFromCsv(mapp, conf.inputDirPrefix+lp.ToString(), "test")
+		karten, err := readCardsFromCsv(mapp, conf.inputDirPrefix+lp.ToString(), "test", reverse)
 		if err != nil {
 			return allCards, err
 		}
