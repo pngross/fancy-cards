@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	random "math/rand/v2"
 	"os"
 	"path/filepath"
@@ -87,7 +86,6 @@ func ReadCards(conf CardsConfig, lp LangPair) ([]WordCard, error) {
 	for _, mapp := range mappings {
 		karten, err := readCardsFromCsv(mapp, conf.inputDirPrefix+lp.ToString(), "test")
 		if err != nil {
-			fmt.Println(err.Error())
 			return allCards, err
 		}
 		allCards = append(allCards, karten...)
