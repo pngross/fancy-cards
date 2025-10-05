@@ -39,6 +39,10 @@ func (l LangPair) ToString() string {
 	return l.sourceLang + "_" + l.targetLang
 }
 
+func (l LangPair) Flip() LangPair {
+	return LangPair{sourceLang: l.targetLang, targetLang: l.sourceLang}
+}
+
 type CardsConfig struct {
 	languageNames       map[string]string
 	langPairs           []LangPair

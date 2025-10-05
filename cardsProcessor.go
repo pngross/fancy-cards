@@ -50,6 +50,7 @@ func readCardsFromCsv(mapp InputFile, inputdir, group string, reverse bool) ([]W
 	if err != nil {
 		return karten, err
 	}
+
 	csvReader := csv.NewReader(f)
 	csvReader.Comma = ';'
 	csvReader.LazyQuotes = false
@@ -57,6 +58,7 @@ func readCardsFromCsv(mapp InputFile, inputdir, group string, reverse bool) ([]W
 	if err != nil {
 		return karten, err
 	}
+
 	for i, ds := range inputData {
 
 		if i == 0 && mapp.skipHeaderLine {
@@ -75,7 +77,6 @@ func readCardsFromCsv(mapp InputFile, inputdir, group string, reverse bool) ([]W
 			karte = WordCard{sourceWord: ds[mapp.sourceWordCol],
 				targetWord: ds[mapp.targetWordCol],
 				group:      group}
-
 		}
 
 		if len(ds) > mapp.targetCommentCol {

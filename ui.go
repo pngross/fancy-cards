@@ -21,6 +21,10 @@ type WordCardsApp struct {
 	reverse    bool
 }
 
+// ******************************************************
+// INITIALIZE
+// ******************************************************
+
 func InitUI(conf CardsConfig) WordCardsApp {
 	fyneApp := app.New()
 	w := fyneApp.NewWindow("fancyCards")
@@ -32,6 +36,38 @@ func InitUI(conf CardsConfig) WordCardsApp {
 	application.HandleError(err)
 
 	return application
+}
+
+func (a *WordCardsApp) CreateMainMenu(conf CardsConfig) {
+	hello := widget.NewLabel("I <3 Wordcards")
+	a.mainMenu = container.NewVBox(
+		hello,
+	)
+
+	for _, lp := range conf.langPairs {
+		lpstr := conf.GetLangPairAsString(lp)
+		btn := widget.NewButton(lpstr, func() {
+			a.OpenLangpairMenu(lp, false)
+		})
+		a.mainMenu.Add(btn)
+
+		// Automatically adding reverse wordcards for each language pair
+		// This skipped if there's a collision (language pair already exists in the original file)
+
+		reversePair := lp.Flip()
+		if !conf.LangPairExists(reversePair) {
+			reverseLpstr := conf.GetLangPairAsString(reversePair)
+			reverseBtn := widget.NewButton(reverseLpstr, func() {
+				a.OpenLangpairMenu(lp, true)
+			})
+			a.mainMenu.Add(reverseBtn)
+		}
+
+	}
+
+	a.mainMenu.Add(widget.NewButton("Anleitung", func() {
+		a.HandleError(errors.New("Funktion ist noch nicht programmiert :P"))
+	}))
 }
 
 // ******************************************************
@@ -66,18 +102,44 @@ func (a *WordCardsApp) HandleError(err error) {
 // WORDCARDS
 // ******************************************************
 
+func (a *WordCardsApp) OpenLangpairMenu(lp LangPair, reverse bool) {
+	a.selectedLP = lp
+	a.reverse = reverse
+
+	hello := widget.NewLabel(a.conf.GetLangPairAsString(a.GetSelectedLangPair()))
+
+	exerciseButton := widget.NewButton("Starten", func() {
+		cards, err := ReadCards(a.conf, lp, reverse)
+		a.HandleError(err)
+		if err == nil {
+			a.rando = NewRando(cards)
+			a.LoadRandomCard()
+		}
+	})
+
+	statsButton := widget.NewButton("Statistik ansehen", func() {
+		a.ShowStatSummary()
+	})
+
+	lpMenu := container.NewVBox(hello, exerciseButton, statsButton, a.ReturnButton())
+	a.window.SetContent(lpMenu)
+
+}
+
+func (a *WordCardsApp) GetSelectedLangPair() LangPair {
+	if a.reverse {
+		return a.selectedLP.Flip()
+	} else {
+		return a.selectedLP
+	}
+}
+
 func (a *WordCardsApp) LoadRandomCard() {
 	wc := a.rando.FetchRandomCard()
 
 	textbox := widget.NewEntry()
 
-	var lang string
-	if a.reverse {
-		lang = a.conf.GetLangName(a.selectedLP.targetLang)
-	} else {
-		lang = a.conf.GetLangName(a.selectedLP.sourceLang)
-	}
-
+	lang := a.conf.GetLangName(a.GetSelectedLangPair().sourceLang)
 	inputWord := widget.NewLabel(fmt.Sprintf("%s: %s", lang, wc.sourceWord))
 
 	checkBtn := widget.NewButton("Prüfen", func() {
@@ -114,16 +176,7 @@ func (a *WordCardsApp) CheckCard(word string, wc WordCard) {
 		a.LoadRandomCard()
 	})
 
-	var sw, tw string
-	if a.reverse {
-		tw = wc.sourceWord
-		sw = wc.targetWord
-	} else {
-		sw = wc.sourceWord
-		tw = wc.targetWord
-	}
-
-	correctSolution := widget.NewLabel(fmt.Sprintf("%s => %s", sw, tw))
+	correctSolution := widget.NewLabel(fmt.Sprintf("%s => %s", wc.sourceWord, wc.targetWord))
 
 	resultView := container.NewVBox(
 		feedbackLabel,
@@ -135,88 +188,12 @@ func (a *WordCardsApp) CheckCard(word string, wc WordCard) {
 	a.window.SetContent(resultView)
 }
 
-func (a *WordCardsApp) CreateMainMenu(conf CardsConfig) {
-	hello := widget.NewLabel("I <3 Wordcards")
-	a.mainMenu = container.NewVBox(
-		hello,
-	)
-
-	for _, lp := range conf.langPairs {
-		lpstr := conf.GetLangPairAsString(lp)
-		btn := widget.NewButton(lpstr, func() {
-			a.SelectLangpair(lp, false)
-		})
-		a.mainMenu.Add(btn)
-
-		// Automatically adding reverse wordcards for each language pair
-		// This skipped if there's a collision (language pair already exists in the original file)
-
-		reversePair := LangPair{sourceLang: lp.targetLang, targetLang: lp.sourceLang}
-		if !conf.LangPairExists(reversePair) {
-			reverseLpstr := conf.GetLangPairAsString(reversePair)
-			reverseBtn := widget.NewButton(reverseLpstr, func() {
-				a.SelectLangpair(lp, true)
-			})
-			a.mainMenu.Add(reverseBtn)
-		}
-
-	}
-
-	a.mainMenu.Add(widget.NewButton("Anleitung", func() {
-		a.HandleError(errors.New("Funktion ist noch nicht programmiert :P"))
-	}))
-
-	a.mainMenu.Add(widget.NewButton("Statistik", func() {
-		a.DisplayStatsMenu()
-	}))
-}
-
-func (a *WordCardsApp) SelectLangpair(lp LangPair, reverse bool) {
-	a.selectedLP = lp
-	a.reverse = reverse
-	cards, err := ReadCards(a.conf, lp, reverse)
-	a.HandleError(err)
-	if err == nil {
-		a.rando = NewRando(cards)
-		a.LoadRandomCard()
-	}
-}
-
 // ******************************************************
 // STATISTICS
 // ******************************************************
 
-func (a *WordCardsApp) DisplayStatsMenu() {
-	hello := widget.NewLabel("Statistik-Übersicht")
-	statMenu := container.NewVBox(
-		hello,
-	)
-
-	for _, lp := range a.conf.langPairs {
-		lpstr := a.conf.GetLangPairAsString(lp)
-		btn := widget.NewButton(lpstr, func() {
-			a.ShowStatSummary(lp)
-		})
-		statMenu.Add(btn)
-
-		// Automatically adding reverse wordcards for each language pair
-		// This skipped if there's a collision (language pair already exists in the original file)
-
-		reversePair := LangPair{sourceLang: lp.targetLang, targetLang: lp.sourceLang}
-		if !a.conf.LangPairExists(reversePair) {
-			reverseLpstr := a.conf.GetLangPairAsString(reversePair)
-			reverseBtn := widget.NewButton(reverseLpstr, func() {
-				a.ShowStatSummary(reversePair)
-			})
-			statMenu.Add(reverseBtn)
-		}
-	}
-
-	statMenu.Add(a.ReturnButton())
-	a.window.SetContent(statMenu)
-}
-
-func (a *WordCardsApp) ShowStatSummary(lp LangPair) {
+func (a *WordCardsApp) ShowStatSummary() {
+	lp := a.GetSelectedLangPair()
 	statEvals := a.GetStatEvals(lp)
 
 	hello := widget.NewLabel(a.conf.GetLangPairAsString(lp))
