@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"fyne.io/fyne/v2"
@@ -66,7 +65,7 @@ func (a *WordCardsApp) CreateMainMenu(conf CardsConfig) {
 	}
 
 	a.mainMenu.Add(widget.NewButton("Anleitung", func() {
-		a.HandleError(errors.New("Funktion ist noch nicht programmiert :P"))
+		a.OpenInstructions()
 	}))
 }
 

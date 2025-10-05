@@ -12,7 +12,7 @@ INI:
 - rename the example ini to fancyCards.ini (contains default settings and some German language names)
 
 FILE LIST:
-- the file list is loaded from the path specified under "languagesConfigFile" in the INI
+- the file list is loaded from the path specified under "fileListConfigFile" in the INI
 - you can copy example_files.csv to that location - then populate it with your own input files
 - you must adhere to the structure of the example_files.csv:
     LINE 1: ORIGINAL LANGUAGE

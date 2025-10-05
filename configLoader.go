@@ -9,6 +9,23 @@ import (
 	ini "gopkg.in/ini.v1"
 )
 
+var defaultIni string = `[LANGUAGES]
+de=Deutsch
+pl=Polnisch
+en=Englisch
+fr=Französisch
+es=Spanisch
+it=Italienisch
+pt=Portugiesisch
+nl=Niederländisch
+hr=Kroatisch
+
+[CONFIGFILES]
+fileListConfigFile=config/dateien.csv
+inputDirPrefix=input_
+savDir=sav
+`
+
 type InputFile struct {
 	fileName         string
 	groups           []string
@@ -44,18 +61,18 @@ func (l LangPair) Flip() LangPair {
 }
 
 type CardsConfig struct {
-	languageNames       map[string]string
-	langPairs           []LangPair
-	savDir              string
-	inputDirPrefix      string
-	languagesConfigFile string
-	files               map[string][]InputFile
+	languageNames      map[string]string
+	langPairs          []LangPair
+	savDir             string
+	inputDirPrefix     string
+	fileListConfigFile string
+	files              map[string][]InputFile
 }
 
 func (c CardsConfig) Init() CardsConfig {
 	c.languageNames = map[string]string{}
 	c.inputDirPrefix = ""
-	c.languagesConfigFile = ""
+	c.fileListConfigFile = ""
 	c.langPairs = []LangPair{}
 	c.files = map[string][]InputFile{}
 	return c
@@ -129,7 +146,7 @@ func processLanguageFileLine(input []string, i int) (InputFile, LangPair, error)
 
 func (c *CardsConfig) ReadLanguagesFile() error {
 
-	f, err := os.Open(c.languagesConfigFile)
+	f, err := os.Open(c.fileListConfigFile)
 	if err != nil {
 		return err
 	}
@@ -180,8 +197,8 @@ func loadConfigsIni(inipath string) (CardsConfig, error) {
 		switch k.Name() {
 		case "inputDirPrefix":
 			c.inputDirPrefix = val
-		case "languagesConfigFile":
-			c.languagesConfigFile = val
+		case "fileListConfigFile":
+			c.fileListConfigFile = val
 		case "savDir":
 			c.savDir = val
 		}
@@ -190,8 +207,8 @@ func loadConfigsIni(inipath string) (CardsConfig, error) {
 	if len(configfilesSection.Keys()) == 0 {
 		return c, fmt.Errorf("Fehler beim Einlesen der %s: Bereich [CONFIGFILES] fehlt", inipath)
 	}
-	if c.inputDirPrefix == "" || c.languagesConfigFile == "" {
-		return c, fmt.Errorf("Fehler beim Einlesen der %s:\n Im Bereich [CONFIGFILES] fehlt inputDirPrefix und/oder languagesConfigFile", inipath)
+	if c.inputDirPrefix == "" || c.fileListConfigFile == "" {
+		return c, fmt.Errorf("Fehler beim Einlesen der %s:\n Im Bereich [CONFIGFILES] fehlt inputDirPrefix und/oder fileListConfigFile", inipath)
 	}
 	if len(c.languageNames) == 0 {
 		return c, fmt.Errorf("Fehler beim Einlesen der %s: Keine Sprachen definiert", inipath)
@@ -200,4 +217,9 @@ func loadConfigsIni(inipath string) (CardsConfig, error) {
 	c.ReadLanguagesFile()
 
 	return c, nil
+}
+
+func CreateDefaultIni(inipath string) {
+	data := []byte(defaultIni)
+	os.WriteFile(inipath, data, 0644)
 }
