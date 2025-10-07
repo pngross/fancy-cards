@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	random "math/rand/v2"
 	"os"
@@ -40,6 +41,9 @@ func (rando *CardsRandomizer) FetchRandomCard() WordCard {
 	pos := rando.prevpos
 	for pos == rando.prevpos {
 		pos = random.IntN(rando.randoSum)
+		if len(rando.cards) == 1 {
+			break
+		}
 	}
 	rando.prevpos = pos
 	return rando.cards[pos]
@@ -111,6 +115,9 @@ func ReadCards(conf CardsConfig, lp LangPair, reverse bool, groups []string) ([]
 			return allCards, err
 		}
 		allCards = append(allCards, karten...)
+	}
+	if len(allCards) == 0 {
+		return allCards, errors.New("Es wurden keine Karteikarten gefunden!")
 	}
 	return allCards, nil
 }
