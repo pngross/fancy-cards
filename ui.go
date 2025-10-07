@@ -38,9 +38,9 @@ func InitUI(conf CardsConfig) WordCardsApp {
 }
 
 func (a *WordCardsApp) CreateMainMenu(conf CardsConfig) {
-	hello := widget.NewLabel("I <3 Wordcards")
+	viewHeader := NewViewHeader("I <3 Wordcards")
 	a.mainMenu = container.NewVBox(
-		hello,
+		viewHeader,
 	)
 
 	for _, lp := range conf.langPairs {
@@ -83,6 +83,13 @@ func (a *WordCardsApp) ReturnButton() *widget.Button {
 	})
 }
 
+func NewViewHeader(str string) *widget.Label {
+	vh := widget.NewLabel(str)
+	vh.Alignment = fyne.TextAlignCenter
+	vh.TextStyle = fyne.TextStyle{Bold: true}
+	return vh
+}
+
 func (a *WordCardsApp) HandleError(err error) {
 	if err == nil {
 		return
@@ -105,10 +112,10 @@ func (a *WordCardsApp) OpenLangpairMenu(lp LangPair, reverse bool) {
 	a.selectedLP = lp
 	a.reverse = reverse
 
-	hello := widget.NewLabel(a.conf.GetLangPairAsString(a.GetSelectedLangPair()))
+	viewHeader := NewViewHeader(a.conf.GetLangPairAsString(a.GetSelectedLangPair()))
 
 	exerciseButton := widget.NewButton("Starten", func() {
-		cards, err := ReadCards(a.conf, lp, reverse)
+		cards, err := ReadCards(a.conf, lp, reverse, []string{})
 		a.HandleError(err)
 		if err == nil {
 			a.rando = NewRando(cards)
@@ -116,11 +123,15 @@ func (a *WordCardsApp) OpenLangpairMenu(lp LangPair, reverse bool) {
 		}
 	})
 
+	toGroupsButton := widget.NewButton("Wörter-Gruppen auswählen", func() {
+		a.GroupSelection()
+	})
+
 	statsButton := widget.NewButton("Statistik ansehen", func() {
 		a.ShowStatSummary()
 	})
 
-	lpMenu := container.NewVBox(hello, exerciseButton, statsButton, a.ReturnButton())
+	lpMenu := container.NewVBox(viewHeader, exerciseButton, toGroupsButton, statsButton, a.ReturnButton())
 	a.window.SetContent(lpMenu)
 
 }
@@ -131,6 +142,29 @@ func (a *WordCardsApp) GetSelectedLangPair() LangPair {
 	} else {
 		return a.selectedLP
 	}
+}
+
+func (a *WordCardsApp) GroupSelection() {
+
+	viewHeader := NewViewHeader(a.conf.GetLangPairAsString(a.GetSelectedLangPair()) + " - Wörter-Gruppen auswählen")
+
+	checkboxGroup := widget.NewCheckGroup(a.conf.GetGroups(a.selectedLP), func(strs []string) {})
+
+	exerciseButton := widget.NewButton("Starten", func() {
+		cards, err := ReadCards(a.conf, a.selectedLP, a.reverse, checkboxGroup.Selected)
+		a.HandleError(err)
+		if err == nil {
+			a.rando = NewRando(cards)
+			a.LoadRandomCard()
+		}
+	})
+
+	backButton := widget.NewButton("Zurück", func() {
+		a.OpenLangpairMenu(a.selectedLP, a.reverse)
+	})
+
+	groupsMenu := container.NewVBox(viewHeader, checkboxGroup, exerciseButton, backButton, a.ReturnButton())
+	a.window.SetContent(groupsMenu)
 }
 
 func (a *WordCardsApp) LoadRandomCard() {
@@ -195,9 +229,9 @@ func (a *WordCardsApp) ShowStatSummary() {
 	lp := a.GetSelectedLangPair()
 	statEvals := a.GetStatEvals(lp)
 
-	hello := widget.NewLabel(a.conf.GetLangPairAsString(lp))
+	viewHeader := NewViewHeader(a.conf.GetLangPairAsString(lp))
 	statPage := container.NewVBox(
-		hello,
+		viewHeader,
 	)
 	if len(statEvals) == 0 {
 		statPage.Add(widget.NewLabel("Noch keine Statistik für diese Karten erfasst..."))

@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	ini "gopkg.in/ini.v1"
@@ -102,6 +103,18 @@ func (c CardsConfig) GetInputFiles(lpst string) []InputFile {
 	return c.files[lpst]
 }
 
+func (c CardsConfig) GetGroups(lp LangPair) []string {
+	groupList := make([]string, 0)
+	for _, file := range c.GetInputFiles(lp.ToString()) {
+		for _, group := range file.groups {
+			if !slices.Contains(groupList, group) {
+				groupList = append(groupList, group)
+			}
+		}
+	}
+	return groupList
+}
+
 func (c CardsConfig) GetLangName(id string) string {
 	return string(c.languageNames[id])
 }
@@ -138,7 +151,10 @@ func processLanguageFileLine(input []string, i int) (InputFile, LangPair, error)
 		f.fileName = input[2]
 
 		if len(input) >= 4 {
-			f.groups = strings.Split(input[3], ",")
+			groupsRaw := strings.Split(input[3], ",")
+			for _, str := range groupsRaw {
+				f.groups = append(f.groups, strings.Trim(str, " "))
+			}
 		}
 	}
 	return f, lp, err

@@ -5,6 +5,7 @@ import (
 	random "math/rand/v2"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -88,12 +89,24 @@ func readCardsFromCsv(mapp InputFile, inputdir, group string, reverse bool) ([]W
 	return karten, nil
 }
 
-func ReadCards(conf CardsConfig, lp LangPair, reverse bool) ([]WordCard, error) {
-	mappings := conf.GetInputFiles(lp.ToString())
+func ReadCards(conf CardsConfig, lp LangPair, reverse bool, groups []string) ([]WordCard, error) {
+	inputfiles := conf.GetInputFiles(lp.ToString())
 
 	allCards := []WordCard{}
-	for _, mapp := range mappings {
-		karten, err := readCardsFromCsv(mapp, conf.inputDirPrefix+lp.ToString(), "test", reverse)
+	for _, file := range inputfiles {
+
+		// Skip files whose groups don't match at least one of the groups provided as args
+		found := false
+		for _, group := range groups {
+			if slices.Contains(file.groups, group) {
+				break
+			}
+		}
+		if !found && len(groups) > 0 {
+			break
+		}
+
+		karten, err := readCardsFromCsv(file, conf.inputDirPrefix+lp.ToString(), "test", reverse)
 		if err != nil {
 			return allCards, err
 		}

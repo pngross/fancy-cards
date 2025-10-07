@@ -7,13 +7,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var instructionsInputFiles string
-
-var instructionsLanguageFile string = `Gleichzeitig müssen in der Datei`
-
 func (a *WordCardsApp) OpenInstructions() {
 
-	header := widget.NewLabel("Anleitung")
+	header := NewViewHeader("Anleitung")
 
 	instructionsText := "DATEILISTE:"
 	instructionsText += fmt.Sprintf("\nIn der Datei %s alle Dateien auflisten, aus denen Karteikarten gelesen werden sollen.", a.conf.fileListConfigFile)

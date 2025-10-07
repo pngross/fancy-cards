@@ -15,9 +15,11 @@ FILE LIST:
 - the file list is loaded from the path specified under "fileListConfigFile" in the INI
 - you can copy example_files.csv to that location - then populate it with your own input files
 - you must adhere to the structure of the example_files.csv:
-    LINE 1: ORIGINAL LANGUAGE
-    LINE 2: LANGUAGE TO LEARN
-    LINE 3: FILENAME (not a relative filepath, just the name of the file - see below)
+    LINE 1: HEADER (will be ignored)
+    COLUMN 1: ORIGINAL LANGUAGE
+    COLUMN 2: LANGUAGE TO LEARN
+    COLUMN 3: FILENAME (not a relative filepath, just the name of the file - see below)
+    COLUMN 4: GROUPS (SEPARATED BY COMMA)
 
 INPUT FILES: (Containing the ACTUAL WORD CARDS)
 - These must also be CSV files
@@ -30,10 +32,11 @@ INPUT FILES: (Containing the ACTUAL WORD CARDS)
         You can set a custom prefix instead of "input_" in the fancyCards.ini
 
 - The program can only process wordcards from CSV files with the following structure:
-    LINE 1: WORD FROM ORIGINAL LANGUAGE
-    LINE 2: WORD FROM LEARNING LANGUAGE
-    LINE 3: COMMENT (in original language, currently unsupported feature)
-    LINE 4: COMMENT (in learning language, currently unsupported feature)
+    LINE 1: HEADER (will be ignored)
+    COLUMN 1: WORD FROM ORIGINAL LANGUAGE
+    COLUMN 2: WORD FROM LEARNING LANGUAGE
+    COLUMN 3: COMMENT (in original language, currently unsupported feature)
+    COLUMN 4: COMMENT (in learning language, currently unsupported feature)
     Other structures will lead to errors / unsuccessful wordcard parsing.
 
 The program will display errors in the GUI.
