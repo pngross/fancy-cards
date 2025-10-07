@@ -123,15 +123,20 @@ func (a *WordCardsApp) OpenLangpairMenu(lp LangPair, reverse bool) {
 		}
 	})
 
-	toGroupsButton := widget.NewButton("Wörter-Gruppen auswählen", func() {
-		a.GroupSelection()
-	})
+	lpMenu := container.NewVBox(viewHeader, exerciseButton)
+	if len(a.conf.GetGroups(lp)) > 0 {
+		toGroupsButton := widget.NewButton("Wörter-Gruppen auswählen", func() {
+			a.GroupSelection()
+		})
+		lpMenu.Add(toGroupsButton)
+	}
 
 	statsButton := widget.NewButton("Statistik ansehen", func() {
 		a.ShowStatSummary()
 	})
 
-	lpMenu := container.NewVBox(viewHeader, exerciseButton, toGroupsButton, statsButton, a.ReturnButton())
+	lpMenu.Add(statsButton)
+	lpMenu.Add(a.ReturnButton())
 	a.window.SetContent(lpMenu)
 
 }

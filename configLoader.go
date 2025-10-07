@@ -153,7 +153,9 @@ func processLanguageFileLine(input []string, i int) (InputFile, LangPair, error)
 		if len(input) >= 4 {
 			groupsRaw := strings.Split(input[3], ",")
 			for _, str := range groupsRaw {
-				f.groups = append(f.groups, strings.Trim(str, " "))
+				if strings.Trim(str, " ") != "" {
+					f.groups = append(f.groups, strings.Trim(str, " "))
+				}
 			}
 		}
 	}
