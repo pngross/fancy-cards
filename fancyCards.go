@@ -8,7 +8,7 @@ func main() {
 	conf, err := loadConfigsIni("fancyCards.ini")
 
 	application := InitUI(conf)
-	application.HandleError(err)
+	application.HandleErrorList(err)
 	application.window.ShowAndRun()
 	application.SaveStatistics()
 }

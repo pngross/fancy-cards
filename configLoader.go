@@ -85,11 +85,11 @@ func (c *CardsConfig) AddFile(fn string, lp LangPair) {
 	c.files[lp.ToString()] = append(c.files[lp.ToString()], km)
 }
 
-func (c *CardsConfig) ValidateAndAddFile(file InputFile, lp LangPair) error {
+func (c *CardsConfig) ValidateAndAddFile(file InputFile, lp LangPair, lineNo int) error {
 	if c.GetLangName(lp.sourceLang) == "" {
-		return fmt.Errorf("Ungültige Ausgangssprache %s", lp.sourceLang)
+		return fmt.Errorf("%s - Ungültige Ausgangssprache '%s' in Zeile %d", c.fileListConfigFile, lp.sourceLang, lineNo+1)
 	} else if c.GetLangName(lp.targetLang) == "" {
-		return fmt.Errorf("Ungültige Lernsprache %s", lp.targetLang)
+		return fmt.Errorf("%s - Ungültige Lernsprache '%s' in Zeile %d", c.fileListConfigFile, lp.sourceLang, lineNo+1)
 	}
 
 	c.files[lp.ToString()] = append(c.files[lp.ToString()], file)
@@ -162,11 +162,11 @@ func processLanguageFileLine(input []string, i int) (InputFile, LangPair, error)
 	return f, lp, err
 }
 
-func (c *CardsConfig) ReadLanguagesFile() error {
-
+func (c *CardsConfig) ReadLanguagesFile() []error {
+	errorList := []error{}
 	f, err := os.Open(c.fileListConfigFile)
 	if err != nil {
-		return err
+		return []error{err}
 	}
 	// Lese Sprachen aus CSV-Datei ein
 	reader := csv.NewReader(f)
@@ -174,7 +174,7 @@ func (c *CardsConfig) ReadLanguagesFile() error {
 
 	inputData, err := reader.ReadAll()
 	if err != nil {
-		return err
+		return []error{err}
 	}
 	for i, ds := range inputData {
 		if i == 0 {
@@ -182,25 +182,25 @@ func (c *CardsConfig) ReadLanguagesFile() error {
 		}
 		file, lp, err := processLanguageFileLine(ds, i)
 		if err != nil {
-			fmt.Println(err.Error())
+			errorList = append(errorList, err)
 			continue
 		}
-		err = c.ValidateAndAddFile(file, lp)
+		err = c.ValidateAndAddFile(file, lp, i)
 		if err != nil {
-			fmt.Printf("Zeile %d: %s\n", i+1, err.Error())
+			errorList = append(errorList, err)
 		}
 
 	}
 
-	return nil
+	return errorList
 }
 
-func loadConfigsIni(inipath string) (CardsConfig, error) {
+func loadConfigsIni(inipath string) (CardsConfig, []error) {
 	c := CardsConfig{}.Init()
-
+	errorList := []error{}
 	CardsIniReader, err := ini.Load(inipath)
 	if err != nil {
-		return c, err
+		return c, []error{err}
 	}
 
 	langSection := CardsIniReader.Section("LANGUAGES")
@@ -223,18 +223,20 @@ func loadConfigsIni(inipath string) (CardsConfig, error) {
 	}
 
 	if len(configfilesSection.Keys()) == 0 {
-		return c, fmt.Errorf("Fehler beim Einlesen der %s: Bereich [CONFIGFILES] fehlt", inipath)
+		errorList = append(errorList, fmt.Errorf("Fehler beim Einlesen der %s: Bereich [CONFIGFILES] fehlt", inipath))
 	}
 	if c.inputDirPrefix == "" || c.fileListConfigFile == "" {
-		return c, fmt.Errorf("Fehler beim Einlesen der %s:\n Im Bereich [CONFIGFILES] fehlt inputDirPrefix und/oder fileListConfigFile", inipath)
+		errorList = append(errorList, fmt.Errorf("Fehler beim Einlesen der %s:\n Im Bereich [CONFIGFILES] fehlt inputDirPrefix und/oder fileListConfigFile", inipath))
 	}
 	if len(c.languageNames) == 0 {
-		return c, fmt.Errorf("Fehler beim Einlesen der %s: Keine Sprachen definiert", inipath)
+		errorList = append(errorList, fmt.Errorf("Fehler beim Einlesen der %s: Keine Sprachen definiert", inipath))
 	}
 
-	c.ReadLanguagesFile()
+	if len(errorList) == 0 {
+		errorList = c.ReadLanguagesFile()
+	}
 
-	return c, nil
+	return c, errorList
 }
 
 func CreateDefaultIni(inipath string) {

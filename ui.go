@@ -94,14 +94,23 @@ func (a *WordCardsApp) HandleError(err error) {
 	if err == nil {
 		return
 	}
-	errMsg := widget.NewLabel(err.Error())
+	a.HandleErrorList([]error{err})
+}
 
-	errWindow := container.NewVBox(
-		errMsg,
-		a.ReturnButton(),
-	)
+func (a *WordCardsApp) HandleErrorList(errorList []error) {
+	if len(errorList) == 0 {
+		return
+	}
 
-	a.window.SetContent(errWindow)
+	errorBox := container.NewVBox(NewViewHeader("Fehler!"))
+
+	for _, err := range errorList {
+		errMsg := widget.NewLabel(err.Error())
+		errorBox.Add(errMsg)
+	}
+
+	errorBox.Add(a.ReturnButton())
+	a.window.SetContent(errorBox)
 }
 
 // ******************************************************

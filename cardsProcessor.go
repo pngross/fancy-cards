@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"fmt"
 	random "math/rand/v2"
 	"os"
 	"path/filepath"
@@ -13,7 +14,6 @@ type WordCard struct {
 	sourceWord    string
 	sourceComment string
 	targetWord    string
-	group         string
 }
 
 type CardsRandomizer struct {
@@ -45,11 +45,12 @@ func (rando *CardsRandomizer) FetchRandomCard() WordCard {
 	return rando.cards[pos]
 }
 
-func readCardsFromCsv(mapp InputFile, inputdir, group string, reverse bool) ([]WordCard, error) {
+func readCardsFromCsv(mapp InputFile, inputdir string, reverse bool) ([]WordCard, error) {
 	karten := []WordCard{}
-	f, err := os.Open(filepath.Join(inputdir, mapp.fileName))
+	path := filepath.Join(inputdir, mapp.fileName)
+	f, err := os.Open(path)
 	if err != nil {
-		return karten, err
+		return karten, fmt.Errorf("Datei '%s' konnte nicht geöffnet werden", path)
 	}
 
 	csvReader := csv.NewReader(f)
@@ -57,7 +58,7 @@ func readCardsFromCsv(mapp InputFile, inputdir, group string, reverse bool) ([]W
 	csvReader.LazyQuotes = false
 	inputData, err := csvReader.ReadAll()
 	if err != nil {
-		return karten, err
+		return karten, fmt.Errorf("Aus Datei '%s' konnten keine Karteikarten gelesen werden!\nBitte die Datei prüfen.", path)
 	}
 
 	for i, ds := range inputData {
@@ -72,12 +73,10 @@ func readCardsFromCsv(mapp InputFile, inputdir, group string, reverse bool) ([]W
 		var karte WordCard
 		if reverse {
 			karte = WordCard{sourceWord: ds[mapp.targetWordCol],
-				targetWord: ds[mapp.sourceWordCol],
-				group:      group}
+				targetWord: ds[mapp.sourceWordCol]}
 		} else {
 			karte = WordCard{sourceWord: ds[mapp.sourceWordCol],
-				targetWord: ds[mapp.targetWordCol],
-				group:      group}
+				targetWord: ds[mapp.targetWordCol]}
 		}
 
 		if len(ds) > mapp.targetCommentCol {
@@ -95,18 +94,19 @@ func ReadCards(conf CardsConfig, lp LangPair, reverse bool, groups []string) ([]
 	allCards := []WordCard{}
 	for _, file := range inputfiles {
 
-		// Skip files whose groups don't match at least one of the groups provided as args
+		// Skip files whose groups don't match at least one of the groups provided in args
 		found := false
 		for _, group := range groups {
 			if slices.Contains(file.groups, group) {
+				found = true
 				break
 			}
 		}
 		if !found && len(groups) > 0 {
-			break
+			continue
 		}
 
-		karten, err := readCardsFromCsv(file, conf.inputDirPrefix+lp.ToString(), "test", reverse)
+		karten, err := readCardsFromCsv(file, conf.inputDirPrefix+lp.ToString(), reverse)
 		if err != nil {
 			return allCards, err
 		}
