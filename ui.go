@@ -163,6 +163,7 @@ func (a *WordCardsApp) GroupSelection() {
 	viewHeader := NewViewHeader(a.conf.GetLangPairAsString(a.GetSelectedLangPair()) + " - Wörter-Gruppen auswählen")
 
 	checkboxGroup := widget.NewCheckGroup(a.conf.GetGroups(a.selectedLP), func(strs []string) {})
+	checkboxGroup.Horizontal = true
 
 	exerciseButton := widget.NewButton("Starten", func() {
 		cards, err := ReadCards(a.conf, a.selectedLP, a.reverse, checkboxGroup.Selected)
